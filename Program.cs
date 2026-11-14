@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Globalization;
 
-namespace Lab06
+namespace Taxi_service
 {
     internal class Program
     {
@@ -82,5 +82,65 @@ namespace Lab06
             }
             return -1;
         }
+        static void PrintAll()
+        {
+            if (count == 0)
+            {
+                Console.WriteLine("Поїздок поки немає.");
+                return;
+            }
+
+            Console.WriteLine();
+            Console.WriteLine($"{"№",3} | {"Водій",-12} | {"Дата й час",-16} | {"Звідки",-20} | " +
+                              $"{"Куди",-20} | {"Км",7} | {"Тариф",7} | {"Оплата",-7} | {"Вартість",9}");
+            Console.WriteLine(new string('-', 125));
+
+            decimal total = 0;
+            for (int i = 0; i < count; i++)
+            {
+                string pay = isCash[i] ? "готівка" : "картка";
+                Console.WriteLine($"{ids[i],3} | {drivers[i],-12} | {tripDates[i]:dd.MM.yyyy HH:mm} | " +
+                                  $"{pickupAddresses[i],-20} | {destinations[i],-20} | " +
+                                  $"{distances[i],7:F1} | {ratesPerKm[i],7:F2} | {pay,-7} | {Cost(i),9:F2}");
+                total += Cost(i);
+            }
+
+            Console.WriteLine(new string('-', 125));
+            Console.WriteLine($"Усього поїздок: {count}, загальний виторг: {total:F2} грн.");
+            PrintCounter();
+
+            PrintDriverRevenue();
+        }
+
+
+        static void PrintDriverRevenue()
+        {
+            string[] names = new string[count];
+            decimal[] sums = new decimal[count];
+            int n = 0;
+
+            for (int i = 0; i < count; i++)
+            {
+                int k = -1;
+                for (int j = 0; j < n; j++)
+                {
+                    if (names[j] == drivers[i]) { k = j; break; }
+                }
+                if (k == -1)
+                {
+                    k = n;
+                    names[n] = drivers[i];
+                    n++;
+                }
+                sums[k] += Cost(i);
+            }
+
+            Console.WriteLine("Виторг по водіях:");
+            for (int j = 0; j < n; j++)
+            {
+                Console.WriteLine($"  {names[j],-12} {sums[j],10:F2} грн");
+            }
+        }
     }
 }
+    
