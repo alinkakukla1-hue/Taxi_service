@@ -17,7 +17,7 @@ namespace Taxi_service
         static decimal[] ratesPerKm = new decimal[Capacity];     // тариф за 1 км
         static bool[] isCash = new bool[Capacity];               // спосіб оплати
 
-        static int count = 0;   
+        static int count = 0;
         static int nextId = 1;
 
 
@@ -140,7 +140,81 @@ namespace Taxi_service
             {
                 Console.WriteLine($"  {names[j],-12} {sums[j],10:F2} грн");
             }
+
+            static void FindById()
+            {
+                Console.Write("Номер поїздки для пошуку: ");
+                if (!int.TryParse(Console.ReadLine(), out int id))
+                {
+                    Console.WriteLine("Номер має бути цілим числом.");
+                    return;
+                }
+
+                int index = IndexOfId(id);
+                if (index == -1)
+                {
+                    Console.WriteLine($"Поїздки №{id} у списку немає.");
+                    return;
+                }
+
+                Console.WriteLine($"Знайдено в позиції {index}:");
+                Console.WriteLine($"  номер:      {ids[index]}");
+                Console.WriteLine($"  водій:      {drivers[index]}");
+                Console.WriteLine($"  дата й час: {tripDates[index]:dd.MM.yyyy HH:mm}");
+                Console.WriteLine($"  звідки:     {pickupAddresses[index]}");
+                Console.WriteLine($"  куди:       {destinations[index]}");
+                Console.WriteLine($"  відстань:   {distances[index]:F1} км");
+                Console.WriteLine($"  тариф:      {ratesPerKm[index]:F2} грн/км");
+                Console.WriteLine($"  оплата:     {(isCash[index] ? "готівка" : "картка")}");
+                Console.WriteLine($"  вартість:   {Cost(index):F2} грн");
+            }
+
+
+            static void DeleteById()
+            {
+                Console.Write("Номер поїздки для видалення: ");
+                if (!int.TryParse(Console.ReadLine(), out int id))
+                {
+                    Console.WriteLine("Номер має бути цілим числом.");
+                    return;
+                }
+
+                int index = IndexOfId(id);
+                if (index == -1)
+                {
+                    Console.WriteLine($"Поїздки №{id} у списку немає.");
+                    return;
+                }
+
+                Console.WriteLine($"Видалено поїздку №{ids[index]} ({drivers[index]}, " +
+                                  $"{pickupAddresses[index]} — {destinations[index]}).");
+
+                for (int i = index; i < count - 1; i++)
+                {
+                    ids[i] = ids[i + 1];
+                    drivers[i] = drivers[i + 1];
+                    tripDates[i] = tripDates[i + 1];
+                    pickupAddresses[i] = pickupAddresses[i + 1];
+                    destinations[i] = destinations[i + 1];
+                    distances[i] = distances[i + 1];
+                    ratesPerKm[i] = ratesPerKm[i + 1];
+                    isCash[i] = isCash[i + 1];
+                }
+
+                count--;
+
+                // Очищаємо звільнену останню комірку
+                ids[count] = 0;
+                drivers[count] = "";
+                tripDates[count] = default;
+                pickupAddresses[count] = "";
+                destinations[count] = "";
+                distances[count] = 0;
+                ratesPerKm[count] = 0m;
+                isCash[count] = false;
+
+                PrintCounter();
+            }
         }
     }
 }
-    
