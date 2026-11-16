@@ -196,9 +196,10 @@ namespace Taxi_service
         }
 
 
-        static decimal Cost(int index)
+        // Вартість поїздки: відстань × тариф. Нічого не виводить, лише повертає результат
+        static decimal CalcCost(double distanceKm, decimal ratePerKm)
         {
-            return Math.Round((decimal)distances[index] * ratesPerKm[index], 2);
+            return Math.Round((decimal)distanceKm * ratePerKm, 2);
         }
 
 
@@ -222,71 +223,13 @@ namespace Taxi_service
 
             Console.WriteLine("Нова поїздка");
 
-            Console.Write("Водій (прізвище та ініціал): ");
-            string driver = (Console.ReadLine() ?? "").Trim();
-            if (driver.Length == 0)
-            {
-                Console.WriteLine("Ім'я водія не може бути порожнім. Поїздку не додано.");
-                return;
-            }
-
-            Console.Write("Дата й час (дд.мм.рррр гг:хх): ");
-            string dateText = (Console.ReadLine() ?? "").Trim();
-            bool dateOk = DateTime.TryParseExact(dateText, "dd.MM.yyyy HH:mm",
-                                                 CultureInfo.InvariantCulture,
-                                                 DateTimeStyles.None, out DateTime date);
-            if (!dateOk)
-            {
-                Console.WriteLine("Дату не розпізнано. Потрібен формат 12.11.2026 14:30. Поїздку не додано.");
-                return;
-            }
-
-            Console.Write("Адреса подачі: ");
-            string pickup = (Console.ReadLine() ?? "").Trim();
-            if (pickup.Length == 0)
-            {
-                Console.WriteLine("Адреса подачі не може бути порожньою. Поїздку не додано.");
-                return;
-            }
-
-            Console.Write("Адреса призначення: ");
-            string destination = (Console.ReadLine() ?? "").Trim();
-            if (destination.Length == 0)
-            {
-                Console.WriteLine("Адреса призначення не може бути порожньою. Поїздку не додано.");
-                return;
-            }
-
-            Console.Write("Відстань, км: ");
-            string distText = (Console.ReadLine() ?? "").Trim().Replace(',', '.');
-            bool distOk = double.TryParse(distText, NumberStyles.Float,
-                                          CultureInfo.InvariantCulture, out double distance);
-            
-            if (!distOk || double.IsNaN(distance) || double.IsInfinity(distance)
-                || distance <= 0 || distance > 1000)
-            {
-                Console.WriteLine("Відстань має бути числом понад 0 і не більше 1000. Поїздку не додано.");
-                return;
-            }
-
-            Console.Write("Тариф за 1 км, грн: ");
-            string rateText = (Console.ReadLine() ?? "").Trim().Replace(',', '.');
-            bool rateOk = decimal.TryParse(rateText, NumberStyles.Number,
-                                           CultureInfo.InvariantCulture, out decimal rate);
-            if (!rateOk || rate <= 0 || rate > 1000)
-            {
-                Console.WriteLine("Тариф має бути числом понад 0 і не більше 1000. Поїздку не додано.");
-                return;
-            }
-
-            Console.Write("Спосіб оплати (1 — готівка, 2 — картка): ");
-            string payText = (Console.ReadLine() ?? "").Trim();
-            if (payText != "1" && payText != "2")
-            {
-                Console.WriteLine("Потрібно ввести 1 або 2. Поїздку не додано.");
-                return;
-            }
-            bool cash = payText == "1";
+            string driver = ReadText("Водій (прізвище та ініціал): ");
+            DateTime date = ReadDate("Дата й час (дд.мм.рррр гг:хх): ");
+            string pickup = ReadText("Адреса подачі: ");
+            string destination = ReadText("Адреса призначення: ");
+            double distance = ReadDouble("Відстань, км: ", 0.1, 1000);
+            decimal rate = (decimal)ReadDouble("Тариф за 1 км, грн: ", 0.1, 1000);
+            bool cash = ReadInt("Спосіб оплати (1 — готівка, 2 — картка): ", 1, 2) == 1;
 
             if (!Store(driver, date, pickup, destination, distance, rate, cash))
             {
@@ -312,28 +255,47 @@ namespace Taxi_service
                               $"{"Куди",-20} | {"Км",7} | {"Тариф",7} | {"Оплата",-7} | {"Вартість",9}");
             Console.WriteLine(new string('-', 125));
 
-            decimal total = 0;
             for (int i = 0; i < count; i++)
             {
-                string pay = isCash[i] ? "готівка" : "картка";
-                Console.WriteLine($"{ids[i],3} | {drivers[i],-12} | {tripDates[i]:dd.MM.yyyy HH:mm} | " +
-                                  $"{pickupAddresses[i],-20} | {destinations[i],-20} | " +
-                                  $"{distances[i],7:F1} | {ratesPerKm[i],7:F2} | {pay,-7} | {Cost(i),9:F2}");
-                total += Cost(i);
+                PrintRow(i);
             }
 
             Console.WriteLine(new string('-', 125));
-            Console.WriteLine($"Усього поїздок: {count}, загальний виторг: {total:F2} грн.");
+            Console.WriteLine($"Усього поїздок: {count}, загальний виторг: {TotalRevenue():F2} грн.");
             PrintCounter();
 
             PrintDriverRevenue();
         }
 
 
-        static void PrintDriverRevenue()
+        // Виводить один рядок таблиці для поїздки з індексом index
+        static void PrintRow(int index)
         {
-            string[] names = new string[count];
-            decimal[] sums = new decimal[count];
+            string pay = isCash[index] ? "готівка" : "картка";
+            decimal cost = CalcCost(distances[index], ratesPerKm[index]);
+
+            Console.WriteLine($"{ids[index],3} | {drivers[index],-12} | {tripDates[index]:dd.MM.yyyy HH:mm} | " +
+                              $"{pickupAddresses[index],-20} | {destinations[index],-20} | " +
+                              $"{distances[index],7:F1} | {ratesPerKm[index],7:F2} | {pay,-7} | {cost,9:F2}");
+        }
+
+
+        // Загальний виторг за всіма поїздками. Лише повертає суму, нічого не виводить
+        static decimal TotalRevenue()
+        {
+            decimal total = 0;
+            for (int i = 0; i < count; i++)
+            {
+                total += CalcCost(distances[i], ratesPerKm[i]);
+            }
+            return total;
+        }
+
+
+        // Заповнює масиви driverNames і driverSums (виторг по кожному водієві)
+        // і повертає, скільки різних водіїв знайдено
+        static int CollectDriverRevenue(string[] driverNames, decimal[] driverSums)
+        {
             int n = 0;
 
             for (int i = 0; i < count; i++)
@@ -341,16 +303,26 @@ namespace Taxi_service
                 int k = -1;
                 for (int j = 0; j < n; j++)
                 {
-                    if (names[j] == drivers[i]) { k = j; break; }
+                    if (driverNames[j] == drivers[i]) { k = j; break; }
                 }
                 if (k == -1)
                 {
                     k = n;
-                    names[n] = drivers[i];
+                    driverNames[n] = drivers[i];
                     n++;
                 }
-                sums[k] += Cost(i);
+                driverSums[k] += CalcCost(distances[i], ratesPerKm[i]);
             }
+
+            return n;
+        }
+
+
+        static void PrintDriverRevenue()
+        {
+            string[] names = new string[count];
+            decimal[] sums = new decimal[count];
+            int n = CollectDriverRevenue(names, sums);
 
             Console.WriteLine("Виторг по водіях:");
             for (int j = 0; j < n; j++)
@@ -372,6 +344,15 @@ namespace Taxi_service
             }
 
             Console.WriteLine($"Знайдено в позиції {index}:");
+            PrintTrip(index);
+        }
+
+
+        // Виводить усі поля однієї поїздки
+        static void PrintTrip(int index)
+        {
+            decimal cost = CalcCost(distances[index], ratesPerKm[index]);
+
             Console.WriteLine($"  номер:      {ids[index]}");
             Console.WriteLine($"  водій:      {drivers[index]}");
             Console.WriteLine($"  дата й час: {tripDates[index]:dd.MM.yyyy HH:mm}");
@@ -380,7 +361,7 @@ namespace Taxi_service
             Console.WriteLine($"  відстань:   {distances[index]:F1} км");
             Console.WriteLine($"  тариф:      {ratesPerKm[index]:F2} грн/км");
             Console.WriteLine($"  оплата:     {(isCash[index] ? "готівка" : "картка")}");
-            Console.WriteLine($"  вартість:   {Cost(index):F2} грн");
+            Console.WriteLine($"  вартість:   {cost:F2} грн");
         }
 
 
@@ -398,7 +379,14 @@ namespace Taxi_service
             Console.WriteLine($"Видалено поїздку №{ids[index]} ({drivers[index]}, " +
                               $"{pickupAddresses[index]} — {destinations[index]}).");
 
-            // Зсуваємо наступні записи вліво
+            RemoveAt(index);
+            PrintCounter();
+        }
+
+
+        // Прибирає запис з індексом index: зсуває наступні вліво й очищає останню комірку
+        static void RemoveAt(int index)
+        {
             for (int i = index; i < count - 1; i++)
             {
                 ids[i] = ids[i + 1];
@@ -413,7 +401,6 @@ namespace Taxi_service
 
             count--;
 
-            // Очищаємо комірку що звільнилася
             ids[count] = 0;
             drivers[count] = "";
             tripDates[count] = default;
@@ -422,9 +409,6 @@ namespace Taxi_service
             distances[count] = 0;
             ratesPerKm[count] = 0m;
             isCash[count] = false;
-
-            PrintCounter();
         }
     }
-    
 }
