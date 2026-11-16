@@ -7,6 +7,8 @@ namespace Taxi_service
     {
         const int Capacity = 100;
         const int MaxId = 1000000;
+        const decimal StandardRate = 18m;
+        const int MaxTableRows = 100;      // найбільша кількість рядків у таблиці вартості
 
         // Опис поїздки через масиви (один індекс — одна поїздка)
         static int[] ids = new int[Capacity];                    // номер поїздки
@@ -31,22 +33,24 @@ namespace Taxi_service
 
         static void Main(string[] args)
         {
-            bool running = true;
-            while (running)
+            while (true)
             {
                 ShowMenu();
-
-                string choice = (Console.ReadLine() ?? "").Trim();
+                int choice = ReadInt("Ваш вибір: ", 0, 7);
 
                 switch (choice)
                 {
-                    case "1": AddTrip(); break;
-                    case "2": PrintAll(); break;
-                    case "3": FindById(); break;
-                    case "4": DeleteById(); break;
-                    case "0": Goodbye(); running = false; break;
-                    default: UnknownChoice(); break;
+                    case 1: AddTrip(); break;
+                    case 2: PrintAll(); break;
+                    case 3: FindById(); break;
+                    case 4: DeleteById(); break;
+                    case 5: CostCalculator(); break;
+                    case 6: RunTabulation(); break;
+                    case 7: ShowAbout(); break;
+                    case 0: Goodbye(); return;
                 }
+
+                Pause();
             }
         }
 
@@ -60,16 +64,18 @@ namespace Taxi_service
             Console.WriteLine("2: показати всі поїздки");
             Console.WriteLine("3: знайти поїздку за номером");
             Console.WriteLine("4: видалити поїздку за номером");
+            Console.WriteLine("5: порахувати вартість поїздки");
+            Console.WriteLine("6: таблиця вартості за відстанню");
+            Console.WriteLine("7: про програму");
             Console.WriteLine("0: вихід");
-            Console.Write("Ваш вибір: ");
         }
 
-
-        static void UnknownChoice()
+        static void Pause()
         {
-            Console.WriteLine("Такого пункту в меню немає");
+            Console.WriteLine();
+            Console.Write("Натисніть Enter, щоб продовжити...");
+            Console.ReadLine();
         }
-
 
         static void Goodbye()
         {
@@ -268,7 +274,7 @@ namespace Taxi_service
         }
 
 
-        // Виводить один рядок таблиці для поїздки з індексом index
+        // Виводить один рядок таблиці для поїздки
         static void PrintRow(int index)
         {
             string pay = isCash[index] ? "готівка" : "картка";
@@ -280,7 +286,7 @@ namespace Taxi_service
         }
 
 
-        // Загальний виторг за всіма поїздками. Лише повертає суму, нічого не виводить
+        // Загальний виторг за всіма поїздками
         static decimal TotalRevenue()
         {
             decimal total = 0;
@@ -292,8 +298,7 @@ namespace Taxi_service
         }
 
 
-        // Заповнює масиви driverNames і driverSums (виторг по кожному водієві)
-        // і повертає, скільки різних водіїв знайдено
+        // Заповнює масиви та виторг по водіях
         static int CollectDriverRevenue(string[] driverNames, decimal[] driverSums)
         {
             int n = 0;
@@ -383,8 +388,6 @@ namespace Taxi_service
             PrintCounter();
         }
 
-
-        // Прибирає запис з індексом index: зсуває наступні вліво й очищає останню комірку
         static void RemoveAt(int index)
         {
             for (int i = index; i < count - 1; i++)
@@ -409,6 +412,74 @@ namespace Taxi_service
             distances[count] = 0;
             ratesPerKm[count] = 0m;
             isCash[count] = false;
+        }
+        static void CostCalculator()
+        {
+            double distance = ReadDouble("Відстань, км: ", 0.1, 1000);
+            decimal rate = (decimal)ReadDouble("Тариф за 1 км, грн: ", 0.1, 1000);
+
+            decimal cost = CalcCost(distance, rate);
+            Console.WriteLine($"Вартість поїздки: {cost:F2} грн.");
+        }
+
+
+        // Скільки рядків видасть табулювання
+        static int CountRows(double start, double end, double step)
+        {
+            return (int)Math.Floor((end - start) / step + 1e-9) + 1;
+        }
+
+
+        // Виводить таблицю вартості поїздки за стандартним тарифом
+        static void Tabulate(double start, double end, double step)
+        {
+            int rows = CountRows(start, end, step);
+
+            Console.WriteLine();
+            Console.WriteLine($"Вартість поїздки за тарифом {StandardRate:F2} грн/км");
+            Console.WriteLine($"{"Відстань, км",14} | {"Вартість, грн",14}");
+            Console.WriteLine(new string('-', 31));
+
+            for (int i = 0; i < rows; i++)
+            {
+                double distance = start + i * step;
+                decimal cost = CalcCost(distance, StandardRate);
+                Console.WriteLine($"{distance,14:F2} | {cost,14:F2}");
+            }
+        }
+
+
+        static void RunTabulation()
+        {
+            double startKm = ReadDouble("Початкова відстань, км: ", 0.1, 1000);
+            double endKm = ReadDouble("Кінцева відстань, км: ", startKm, 1000);
+            double stepKm = ReadDouble("Крок, км: ", 0.1, 1000);
+
+            int rows = CountRows(startKm, endKm, stepKm);
+            if (rows > MaxTableRows)
+            {
+                Console.WriteLine($"Таблиця матиме {rows} рядків, а дозволено не більше {MaxTableRows}. Збільште крок.");
+                return;
+            }
+
+            Tabulate(startKm, endKm, stepKm);
+        }
+
+
+        static void ShowAbout()
+        {
+            Console.WriteLine("Тема: служба таксі — облік поїздок.");
+            Console.WriteLine("Сутність: поїздка (один запис у сховищі, не більше 100 записів).");
+            Console.WriteLine("Дані зберігаються в паралельних масивах, один індекс — одна поїздка.");
+            Console.WriteLine("Поля поїздки:");
+            Console.WriteLine("  номер поїздки       — int");
+            Console.WriteLine("  водій               — string");
+            Console.WriteLine("  дата й час          — DateTime");
+            Console.WriteLine("  адреса подачі       — string");
+            Console.WriteLine("  адреса призначення  — string");
+            Console.WriteLine("  відстань, км        — double");
+            Console.WriteLine("  тариф за 1 км, грн  — decimal");
+            Console.WriteLine("  спосіб оплати       — bool (true — готівка, false — картка)");
         }
     }
 }
