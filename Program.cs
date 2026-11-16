@@ -6,6 +6,7 @@ namespace Taxi_service
     internal class Program
     {
         const int Capacity = 100;
+        const int MaxId = 1000000;
 
         // Опис поїздки через масиви (один індекс — одна поїздка)
         static int[] ids = new int[Capacity];                    // номер поїздки
@@ -80,7 +81,91 @@ namespace Taxi_service
         {
             Console.WriteLine($"Зайнято комірок: {count} зі {Capacity}.");
         }
+        // Просить ціле число. Якщо введе неправильне, повертає його.
+        static int ReadInt(string prompt, int min, int max)
+        {
+            while (true)
+            {
+                Console.Write(prompt);
+                string text = (Console.ReadLine() ?? "").Trim();
 
+                if (!int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out int value))
+                {
+                    Console.WriteLine("Потрібно ввести ціле число. Спробуйте ще раз.");
+                    continue;
+                }
+
+                if (value < min || value > max)
+                {
+                    Console.WriteLine($"Число має бути від {min} до {max}. Спробуйте ще раз.");
+                    continue;
+                }
+
+                return value;
+            }
+        }
+
+
+        // Просить дійсне число.
+        static double ReadDouble(string prompt, double min, double max)
+        {
+            while (true)
+            {
+                Console.Write(prompt);
+                string text = (Console.ReadLine() ?? "").Trim().Replace(',', '.');
+
+                // NaN і нескінченність теж розпізнаються як числа, тому відсіюємо їх окремо
+                if (!double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out double value)
+                    || double.IsNaN(value) || double.IsInfinity(value))
+                {
+                    Console.WriteLine("Потрібно ввести число. Спробуйте ще раз.");
+                    continue;
+                }
+
+                if (value < min || value > max)
+                {
+                    Console.WriteLine($"Число має бути від {min} до {max}. Спробуйте ще раз.");
+                    continue;
+                }
+
+                return value;
+            }
+        }
+
+        static string ReadText(string prompt)
+        {
+            while (true)
+            {
+                Console.Write(prompt);
+                string text = (Console.ReadLine() ?? "").Trim();
+
+                if (text.Length > 0)
+                {
+                    return text;
+                }
+
+                Console.WriteLine("Значення не може бути порожнім. Спробуйте ще раз.");
+            }
+        }
+
+
+        // Питає дату й час у форматі дд.мм.рррр гг:хх, доки користувач не введе коректні. Повертає їх.
+        static DateTime ReadDate(string prompt)
+        {
+            while (true)
+            {
+                Console.Write(prompt);
+                string text = (Console.ReadLine() ?? "").Trim();
+
+                if (DateTime.TryParseExact(text, "dd.MM.yyyy HH:mm", CultureInfo.InvariantCulture,
+                                           DateTimeStyles.None, out DateTime date))
+                {
+                    return date;
+                }
+
+                Console.WriteLine("Дату не розпізнано. Потрібен формат 12.11.2026 14:30. Спробуйте ще раз.");
+            }
+        }
 
         // Записує поїздку у сховище. Повертає false, якщо вільних комірок немає
         static bool Store(string driver, DateTime date, string pickup, string destination,
@@ -176,7 +261,7 @@ namespace Taxi_service
             string distText = (Console.ReadLine() ?? "").Trim().Replace(',', '.');
             bool distOk = double.TryParse(distText, NumberStyles.Float,
                                           CultureInfo.InvariantCulture, out double distance);
-            // NaN і нескінченність теж розпізнаються як числа, тому відсіюємо їх окремо
+            
             if (!distOk || double.IsNaN(distance) || double.IsInfinity(distance)
                 || distance <= 0 || distance > 1000)
             {
@@ -277,12 +362,7 @@ namespace Taxi_service
 
         static void FindById()
         {
-            Console.Write("Номер поїздки для пошуку: ");
-            if (!int.TryParse(Console.ReadLine(), out int id))
-            {
-                Console.WriteLine("Номер має бути цілим числом.");
-                return;
-            }
+            int id = ReadInt("Номер поїздки для пошуку: ", 1, MaxId);
 
             int index = IndexOfId(id);
             if (index == -1)
@@ -306,12 +386,7 @@ namespace Taxi_service
 
         static void DeleteById()
         {
-            Console.Write("Номер поїздки для видалення: ");
-            if (!int.TryParse(Console.ReadLine(), out int id))
-            {
-                Console.WriteLine("Номер має бути цілим числом.");
-                return;
-            }
+            int id = ReadInt("Номер поїздки для видалення: ", 1, MaxId);
 
             int index = IndexOfId(id);
             if (index == -1)
@@ -323,7 +398,7 @@ namespace Taxi_service
             Console.WriteLine($"Видалено поїздку №{ids[index]} ({drivers[index]}, " +
                               $"{pickupAddresses[index]} — {destinations[index]}).");
 
-            // Зсуваємо всі наступні записи на одну позицію вліво
+            // Зсуваємо наступні записи вліво
             for (int i = index; i < count - 1; i++)
             {
                 ids[i] = ids[i + 1];
@@ -338,7 +413,7 @@ namespace Taxi_service
 
             count--;
 
-            // Очищаємо звільнену останню комірку
+            // Очищаємо комірку що звільнилася
             ids[count] = 0;
             drivers[count] = "";
             tripDates[count] = default;
@@ -351,4 +426,5 @@ namespace Taxi_service
             PrintCounter();
         }
     }
+    
 }
