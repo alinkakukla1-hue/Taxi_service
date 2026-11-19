@@ -518,5 +518,59 @@ namespace Taxi_service
         {
             Console.WriteLine($"Відстаней у списку: {count} зі {capacity}.");
         }
+        
+        static void Statistics(double[] values, int count, out double sum, out double average)
+        {
+            sum = 0;
+
+            for (int i = 0; i < count; i++)
+            {
+                sum += values[i];
+            }
+
+            average = count > 0 ? sum / count : 0;
+        }
+
+        static bool FindMax(double[] values, int count, out double max, out int maxIndex) // Повертає через out найбільше значення індеса
+        {
+            if (count == 0)
+            {
+                max = 0;
+                maxIndex = -1;
+                return false;
+            }
+
+            max = values[0];
+            maxIndex = 0;
+
+            for (int i = 1; i < count; i++)
+            {
+                if (values[i] > max)
+                {
+                    max = values[i];
+                    maxIndex = i;
+                }
+            }
+
+            return true;
+        }
+
+
+        static void ShowStatistics(double[] values, int count)
+        {
+            PrintValues(values, count);
+
+            Statistics(values, count, out double sum, out double average);
+            Console.WriteLine($"Сума відстаней: {sum:F2} км, середня: {average:F2} км.");
+
+            if (FindMax(values, count, out double max, out int maxIndex))
+            {
+                Console.WriteLine($"Найбільша відстань: {max:F2} км (номер {maxIndex + 1}).");
+            }
+            else
+            {
+                Console.WriteLine("Найбільшої відстані немає: список порожній.");
+            }
+        }
     }
 }
