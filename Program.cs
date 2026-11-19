@@ -572,5 +572,53 @@ namespace Taxi_service
                 Console.WriteLine("Найбільшої відстані немає: список порожній.");
             }
         }
+       
+        static void RemoveAt(double[] values, ref int count, int index) // Видаляє елемент за індексом і зсуває решту вліво. Неправильний індекс: повідомлення без змін
+        {
+            if (index < 0 || index >= count)
+            {
+                Console.WriteLine($"Неправильний номер: {index + 1}. Нічого не змінено.");
+                return;
+            }
+
+            for (int i = index; i < count - 1; i++)
+            {
+                values[i] = values[i + 1];
+            }
+
+            count--;
+            values[count] = 0;
+        }
+
+        static void TryChangeInt(int number)
+        {
+            number += 100;
+            Console.WriteLine($"  у методі TryChangeInt: number = {number}");
+        }
+
+
+        static void ChangeElement(double[] array)
+        {
+            array[0] += 100;
+            Console.WriteLine($"  у методі ChangeElement: array[0] = {array[0]}");
+        }
+
+
+        static void ShowValueVsReference()
+        {
+            int number = 5;
+            double[] array = { 5, 6, 7 };
+
+            Console.WriteLine("Значимий тип (int без ref):");
+            Console.WriteLine($"  до виклику: number = {number}");
+            TryChangeInt(number);
+            Console.WriteLine($"  після виклику: number = {number} (не змінився)");
+
+            Console.WriteLine();
+            Console.WriteLine("Посилальний тип (масив):");
+            Console.WriteLine($"  до виклику: array[0] = {array[0]}");
+            ChangeElement(array);
+            Console.WriteLine($"  після виклику: array[0] = {array[0]} (змінився)");
+        }
     }
 }
