@@ -33,10 +33,15 @@ namespace Taxi_service
 
         static void Main(string[] args)
         {
+            double[] kmValues = new double[Capacity];   // відстані поїздок, км (для статистики)
+            int kmCount = 0;                            // скільки комірок kmValues зайнято
+            double newValue = 0;
+            int removeNumber = 0;
+
             while (true)
             {
                 ShowMenu();
-                int choice = ReadInt("Ваш вибір: ", 0, 7);
+                int choice = ReadInt("Ваш вибір: ", 0, 11);
 
                 switch (choice)
                 {
@@ -47,6 +52,18 @@ namespace Taxi_service
                     case 5: CostCalculator(); break;
                     case 6: RunTabulation(); break;
                     case 7: ShowAbout(); break;
+                    case 8:
+                        newValue = ReadDouble("Відстань, км: ", 0.1, 1000);
+                        AddValue(kmValues, ref kmCount, newValue, Capacity);
+                        PrintValuesCounter(kmCount, Capacity);
+                        break;
+                    case 9:
+                        removeNumber = ReadInt("Номер відстані для видалення: ", 0, 1000000);
+                        RemoveAt(kmValues, ref kmCount, removeNumber - 1);
+                        PrintValuesCounter(kmCount, Capacity);
+                        break;
+                    case 10: ShowStatistics(kmValues, kmCount); break;
+                    case 11: ShowValueVsReference(); break;
                     case 0: Goodbye(); return;
                 }
 
@@ -67,6 +84,10 @@ namespace Taxi_service
             Console.WriteLine("5: порахувати вартість поїздки");
             Console.WriteLine("6: таблиця вартості за відстанню");
             Console.WriteLine("7: про програму");
+            Console.WriteLine("8: додати відстань до списку");
+            Console.WriteLine("9: видалити відстань за номером");
+            Console.WriteLine("10: показати статистику відстаней");
+            Console.WriteLine("11: значимий і посилальний тип (демонстрація)");
             Console.WriteLine("0: вихід");
         }
 
@@ -471,6 +492,7 @@ namespace Taxi_service
             Console.WriteLine("Тема: служба таксі — облік поїздок.");
             Console.WriteLine("Сутність: поїздка (один запис у сховищі, не більше 100 записів).");
             Console.WriteLine("Дані зберігаються в паралельних масивах, один індекс — одна поїздка.");
+            Console.WriteLine("Окремий масив double — відстані для статистики: він оголошений у Main і передається в методи параметрами.");
             Console.WriteLine("Поля поїздки:");
             Console.WriteLine("  номер поїздки       — int");
             Console.WriteLine("  водій               — string");
@@ -481,7 +503,6 @@ namespace Taxi_service
             Console.WriteLine("  тариф за 1 км, грн  — decimal");
             Console.WriteLine("  спосіб оплати       — bool (true — готівка, false — картка)");
         }
-        
         static void AddValue(double[] values, ref int count, double newValue, int capacity) // Додає число в масив. Лічильник з ref, щоб метод змінив саму змінну з Main
         {
             if (count == capacity)
