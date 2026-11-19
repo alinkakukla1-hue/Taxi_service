@@ -481,5 +481,42 @@ namespace Taxi_service
             Console.WriteLine("  тариф за 1 км, грн  — decimal");
             Console.WriteLine("  спосіб оплати       — bool (true — готівка, false — картка)");
         }
+        
+        static void AddValue(double[] values, ref int count, double newValue, int capacity) // Додає число в масив. Лічильник з ref, щоб метод змінив саму змінну з Main
+        {
+            if (count == capacity)
+            {
+                Console.WriteLine("Місця більше немає.");
+                return;
+            }
+
+            values[count] = newValue;
+            count++;
+        }
+
+
+        // Виводить масив до count таблицею з номерами
+        static void PrintValues(double[] values, int count)
+        {
+            if (count == 0)
+            {
+                Console.WriteLine("Список відстаней поки порожній.");
+                return;
+            }
+
+            Console.WriteLine($"{"№",3} | {"Відстань, км",12}");
+            Console.WriteLine(new string('-', 18));
+
+            for (int i = 0; i < count; i++)
+            {
+                Console.WriteLine($"{i + 1,3} | {values[i],12:F2}");
+            }
+        }
+
+
+        static void PrintValuesCounter(int count, int capacity)
+        {
+            Console.WriteLine($"Відстаней у списку: {count} зі {capacity}.");
+        }
     }
 }
