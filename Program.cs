@@ -20,7 +20,7 @@ namespace Taxi_service
         static decimal[] ratesPerKm = new decimal[Capacity];     // тариф за 1 км
         static bool[] isCash = new bool[Capacity];               // спосіб оплати
 
-        static int count = 0;   // лічильник зайнятих комірок
+        static int tripCount = 0;   // лічильник зайнятих комірок
         static int nextId = 1;
 
         // Початкове налаштування виконується до Main,
@@ -85,7 +85,7 @@ namespace Taxi_service
 
         static void PrintCounter()
         {
-            Console.WriteLine($"Зайнято комірок: {count} зі {Capacity}.");
+            Console.WriteLine($"Зайнято комірок: {tripCount} зі {Capacity}.");
         }
         // Просить ціле число. Якщо введе неправильне, повертає його.
         static int ReadInt(string prompt, int min, int max)
@@ -177,18 +177,18 @@ namespace Taxi_service
         static bool Store(string driver, DateTime date, string pickup, string destination,
                           double distance, decimal rate, bool cash)
         {
-            if (count >= Capacity) return false;
+            if (tripCount >= Capacity) return false;
 
-            ids[count] = nextId;
-            drivers[count] = driver;
-            tripDates[count] = date;
-            pickupAddresses[count] = pickup;
-            destinations[count] = destination;
-            distances[count] = distance;
-            ratesPerKm[count] = rate;
-            isCash[count] = cash;
+            ids[tripCount] = nextId;
+            drivers[tripCount] = driver;
+            tripDates[tripCount] = date;
+            pickupAddresses[tripCount] = pickup;
+            destinations[tripCount] = destination;
+            distances[tripCount] = distance;
+            ratesPerKm[tripCount] = rate;
+            isCash[tripCount] = cash;
 
-            count++;
+            tripCount++;
             nextId++;
             return true;
         }
@@ -211,7 +211,7 @@ namespace Taxi_service
 
         static int IndexOfId(int id)
         {
-            for (int i = 0; i < count; i++)
+            for (int i = 0; i < tripCount; i++)
             {
                 if (ids[i] == id) return i;
             }
@@ -221,7 +221,7 @@ namespace Taxi_service
 
         static void AddTrip()
         {
-            if (count >= Capacity)
+            if (tripCount >= Capacity)
             {
                 Console.WriteLine($"Сховище заповнене: більше за {Capacity} поїздок не вміщується.");
                 return;
@@ -243,14 +243,14 @@ namespace Taxi_service
                 return;
             }
 
-            Console.WriteLine($"Додано поїздку №{ids[count - 1]} у позицію {count - 1}.");
+            Console.WriteLine($"Додано поїздку №{ids[tripCount - 1]} у позицію {tripCount - 1}.");
             PrintCounter();
         }
 
 
         static void PrintAll()
         {
-            if (count == 0)
+            if (tripCount == 0)
             {
                 Console.WriteLine("Поїздок поки немає.");
                 return;
@@ -261,13 +261,13 @@ namespace Taxi_service
                               $"{"Куди",-20} | {"Км",7} | {"Тариф",7} | {"Оплата",-7} | {"Вартість",9}");
             Console.WriteLine(new string('-', 125));
 
-            for (int i = 0; i < count; i++)
+            for (int i = 0; i < tripCount; i++)
             {
                 PrintRow(i);
             }
 
             Console.WriteLine(new string('-', 125));
-            Console.WriteLine($"Усього поїздок: {count}, загальний виторг: {TotalRevenue():F2} грн.");
+            Console.WriteLine($"Усього поїздок: {tripCount}, загальний виторг: {TotalRevenue():F2} грн.");
             PrintCounter();
 
             PrintDriverRevenue();
@@ -290,7 +290,7 @@ namespace Taxi_service
         static decimal TotalRevenue()
         {
             decimal total = 0;
-            for (int i = 0; i < count; i++)
+            for (int i = 0; i < tripCount; i++)
             {
                 total += CalcCost(distances[i], ratesPerKm[i]);
             }
@@ -303,7 +303,7 @@ namespace Taxi_service
         {
             int n = 0;
 
-            for (int i = 0; i < count; i++)
+            for (int i = 0; i < tripCount; i++)
             {
                 int k = -1;
                 for (int j = 0; j < n; j++)
@@ -325,8 +325,8 @@ namespace Taxi_service
 
         static void PrintDriverRevenue()
         {
-            string[] names = new string[count];
-            decimal[] sums = new decimal[count];
+            string[] names = new string[tripCount];
+            decimal[] sums = new decimal[tripCount];
             int n = CollectDriverRevenue(names, sums);
 
             Console.WriteLine("Виторг по водіях:");
@@ -384,13 +384,13 @@ namespace Taxi_service
             Console.WriteLine($"Видалено поїздку №{ids[index]} ({drivers[index]}, " +
                               $"{pickupAddresses[index]} — {destinations[index]}).");
 
-            RemoveAt(index);
+            RemoveTripAt(index);
             PrintCounter();
         }
 
-        static void RemoveAt(int index)
+        static void RemoveTripAt(int index)
         {
-            for (int i = index; i < count - 1; i++)
+            for (int i = index; i < tripCount - 1; i++)
             {
                 ids[i] = ids[i + 1];
                 drivers[i] = drivers[i + 1];
@@ -402,16 +402,16 @@ namespace Taxi_service
                 isCash[i] = isCash[i + 1];
             }
 
-            count--;
+            tripCount--;
 
-            ids[count] = 0;
-            drivers[count] = "";
-            tripDates[count] = default;
-            pickupAddresses[count] = "";
-            destinations[count] = "";
-            distances[count] = 0;
-            ratesPerKm[count] = 0m;
-            isCash[count] = false;
+            ids[tripCount] = 0;
+            drivers[tripCount] = "";
+            tripDates[tripCount] = default;
+            pickupAddresses[tripCount] = "";
+            destinations[tripCount] = "";
+            distances[tripCount] = 0;
+            ratesPerKm[tripCount] = 0m;
+            isCash[tripCount] = false;
         }
         static void CostCalculator()
         {
